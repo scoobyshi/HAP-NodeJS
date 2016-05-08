@@ -1,10 +1,19 @@
 // HomeKit types required
 var types = require("./types.js");
 var exports = module.exports = {};
+var garage = require('garage-js');
 
 var execute = function(accessory,characteristic,value) {
+  if (value !== null) {
+    garage.movedoor();
+  }
   console.log("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " +  value + "."); 
 };
+
+process.on('SIGINT', function() {
+  garage.cleanup();
+  process.exit(0);
+});
 
 exports.accessory = {
   displayName: "Garage Door Opener",
@@ -78,13 +87,13 @@ exports.accessory = {
     },{
       cType: types.CURRENT_DOOR_STATE_CTYPE,
       onUpdate: function(value) { 
-        console.log("Change:",value); 
+        console.log("Change Current:",value);
         execute("Garage Door - current door state", "Current State", value); 
       },
       onRead: function(callback) {
-        console.log("Read:");
+        console.log("Read Current:", garage.currentstate().desc);
         execute("Garage Door - current door state", "Current State", null);
-        callback(undefined); // only testing, we have no physical device to read from
+        callback(garage.currentstate().value); // garage-js preserves and communicates the current known state
       },
       perms: ["pr","ev"],
       format: "int",
@@ -99,13 +108,13 @@ exports.accessory = {
     },{
       cType: types.TARGET_DOORSTATE_CTYPE,
       onUpdate: function(value) { 
-        console.log("Change:",value); 
+        console.log("Change Target:",value);
         execute("Garage Door - target door state", "Current State", value); 
       },
       onRead: function(callback) {
-        console.log("Read:");
+        console.log("Read Target:", garage.currentstate().desc);
         execute("Garage Door - target door state", "Current State", null);
-        callback(undefined); // only testing, we have no physical device to read from
+        callback(garage.currentstate().value); // garage-js has the current state, but need another method for target state
       },
       perms: ["pr","pw","ev"],
       format: "int",
